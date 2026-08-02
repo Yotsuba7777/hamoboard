@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>マイページ | ハモボード</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-root"></div>
+
+  <div class="page">
+    <div class="page-head">
+      <div class="eyebrow">My Page</div>
+      <h1 class="page-title">プロフィール編集</h1>
+      <p class="page-sub">ここで登録した内容が「メンバー自己紹介」に表示されます。</p>
+    </div>
+
+    <div class="card" style="max-width:520px;">
+      <form id="profile-form">
+        <div class="form-group">
+          <label for="p-name">名前(表示名)</label>
+          <input type="text" id="p-name" required />
+        </div>
+        <div class="form-group">
+          <label for="p-part">パート</label>
+          <select id="p-part">
+            <option value="未設定">未設定</option>
+            <option value="Vo">Vo</option>
+            <option value="Cho">Cho</option>
+            <option value="Key">Key</option>
+            <option value="Bass">Bass</option>
+            <option value="Perc">Perc</option>
+            <option value="其他">その他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="p-grade">学年</label>
+          <input type="text" id="p-grade" placeholder="例:2年" />
+        </div>
+        <div class="form-group">
+          <label for="p-bio">ひとことプロフィール</label>
+          <textarea id="p-bio" placeholder="好きなジャンルや、一緒にやりたいことなど"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" id="profile-save">保存する</button>
+        <p class="error-text" id="profile-msg"></p>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/profile.js"></script>
+</body>
+</html>

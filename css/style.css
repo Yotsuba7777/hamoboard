@@ -1,0 +1,520 @@
+@import url("https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap");
+
+:root {
+  --plum: #2b1b3d;
+  --plum-soft: #4a3460;
+  --gold: #e8a33d;
+  --mint: #5fbfb3;
+  --mint-dark: #3e8f84;
+  --white: #ffffff;
+  --ink: #2b1b3d;
+  --muted: #6b5b73;
+  --bg-tint: #f0edf5;
+  --border: #ddd6e6;
+  --danger: #c0574a;
+
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(43, 27, 61, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", sans-serif;
+  background: var(--white);
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+h1, h2, h3, .font-head {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* ---------- layout ---------- */
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+}
+
+.page-head {
+  padding: 40px 0 28px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.page-title {
+  font-size: 28px;
+}
+
+.page-sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* ---------- nav ---------- */
+#nav-root {
+  background: var(--plum);
+}
+
+.nav-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nav-logo {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 700;
+  font-size: 19px;
+  color: var(--white);
+  text-decoration: none;
+}
+
+.nav-logo span {
+  color: var(--gold);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.nav-link {
+  color: #cabede;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.nav-link.active {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.nav-logout {
+  color: #a091b3;
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--gold);
+  color: var(--plum);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 6px 16px rgba(232, 163, 61, 0.4);
+}
+
+.btn-ghost {
+  background: var(--bg-tint);
+  color: var(--plum);
+}
+
+.btn-danger {
+  background: #f6e6e3;
+  color: var(--danger);
+}
+
+.btn-sm {
+  padding: 7px 16px;
+  font-size: 12.5px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- cards ---------- */
+.card {
+  background: var(--bg-tint);
+  border-radius: var(--radius);
+  padding: 22px;
+}
+
+.card-dark {
+  background: var(--plum);
+  color: var(--white);
+  border-radius: var(--radius);
+  padding: 22px;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+/* ---------- band card ---------- */
+.band-card {
+  background: var(--plum);
+  color: var(--white);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.pill-open {
+  background: var(--gold);
+  color: var(--plum);
+}
+
+.pill-closed {
+  background: var(--plum-soft);
+  color: #cabede;
+}
+
+.band-title {
+  font-family: "Shippori Mincho", serif;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.band-desc {
+  color: #d9cfe6;
+  font-size: 13.5px;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  background: var(--plum-soft);
+  color: var(--mint);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+.band-meta {
+  color: #b8acc9;
+  font-size: 11.5px;
+}
+
+.band-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ---------- member card ---------- */
+.member-card {
+  background: var(--bg-tint);
+  border-radius: var(--radius);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.member-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  border-radius: 50%;
+  background: var(--plum);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Shippori Mincho", serif;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.member-name {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.member-part {
+  color: var(--mint-dark);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.member-bio {
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+/* ---------- forms ---------- */
+.form-group {
+  margin-bottom: 18px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--plum);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+textarea,
+select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.checkbox-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.checkbox-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.checkbox-chip input {
+  accent-color: var(--gold);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.error-text {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: 10px;
+  min-height: 18px;
+}
+
+/* ---------- auth pages ---------- */
+.auth-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--plum);
+  padding: 24px;
+}
+
+.auth-box {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow);
+}
+
+.auth-logo {
+  font-family: "Shippori Mincho", serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--plum);
+  margin-bottom: 4px;
+}
+
+.auth-logo span {
+  color: var(--gold);
+}
+
+.auth-sub {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 28px;
+}
+
+.auth-switch {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 18px;
+}
+
+.auth-switch a {
+  color: var(--gold);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* ---------- misc ---------- */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(43, 27, 61, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-box {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 32px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.section-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 620px) {
+  .nav-links {
+    gap: 14px;
+  }
+  .auth-box {
+    padding: 28px 22px;
+  }
+}

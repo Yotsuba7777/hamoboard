@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>掲示板 | ハモボード</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-root"></div>
+
+  <div class="page">
+    <div class="page-head">
+      <div class="eyebrow">Board</div>
+      <h1 class="page-title">バンド募集掲示板</h1>
+      <p class="page-sub">気になるバンドがあれば、リーダーの自己紹介欄から連絡してみましょう。</p>
+    </div>
+
+    <div class="section-actions">
+      <div class="checkbox-row" id="filter-row">
+        <label class="checkbox-chip"><input type="checkbox" id="filter-open" checked /> 募集中のみ表示</label>
+      </div>
+      <button class="btn btn-primary" id="open-new-band">＋ 新しく募集を出す</button>
+    </div>
+
+    <div id="band-list" class="grid grid-2">
+      <p class="loading">読み込み中...</p>
+    </div>
+  </div>
+
+  <!-- 新規投稿モーダル -->
+  <div class="modal-overlay" id="band-modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 class="font-head">バンド募集を投稿</h2>
+        <button class="modal-close" id="close-modal">×</button>
+      </div>
+      <form id="band-form">
+        <div class="form-group">
+          <label for="b-title">タイトル</label>
+          <input type="text" id="b-title" required placeholder="例:Vo.急募！ポップスバンド" />
+        </div>
+        <div class="form-group">
+          <label for="b-genre">ジャンル</label>
+          <input type="text" id="b-genre" placeholder="例:ポップス / R&B / ロック" />
+        </div>
+        <div class="form-group">
+          <label for="b-desc">説明</label>
+          <textarea id="b-desc" placeholder="どんな活動をしたいか、雰囲気など"></textarea>
+        </div>
+        <div class="form-group">
+          <label>募集パート(複数選択可)</label>
+          <div class="checkbox-row">
+            <label class="checkbox-chip"><input type="checkbox" value="Vo" /> Vo</label>
+            <label class="checkbox-chip"><input type="checkbox" value="Cho" /> Cho</label>
+            <label class="checkbox-chip"><input type="checkbox" value="Key" /> Key</label>
+            <label class="checkbox-chip"><input type="checkbox" value="Bass" /> Bass</label>
+            <label class="checkbox-chip"><input type="checkbox" value="Perc" /> Perc</label>
+            <label class="checkbox-chip"><input type="checkbox" value="其他" /> その他</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="b-deadline">募集締切</label>
+          <input type="date" id="b-deadline" />
+        </div>
+        <div class="form-group">
+          <label for="b-contact">連絡方法(任意)</label>
+          <input type="text" id="b-contact" placeholder="例:Instagram @xxxx / LINE" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;" id="band-submit">投稿する</button>
+        <p class="error-text" id="band-error"></p>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/board.js"></script>
+</body>
+</html>

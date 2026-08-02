@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ログイン | ハモボード</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">ハモ<span>ボード</span></div>
+      <div class="auth-sub">ビリぺル バンド募集掲示板</div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">メールアドレス</label>
+          <input type="email" id="email" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="password">パスワード</label>
+          <input type="password" id="password" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;" id="login-btn">ログイン</button>
+        <p class="error-text" id="error-text"></p>
+      </form>
+
+      <div class="auth-switch">
+        アカウントをお持ちでない方は <a href="signup.html">新規登録</a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>
