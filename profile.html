@@ -23,15 +23,24 @@
           <input type="text" id="p-name" required />
         </div>
         <div class="form-group">
-          <label for="p-part">パート</label>
-          <select id="p-part">
-            <option value="未設定">未設定</option>
-            <option value="Vo">Vo</option>
-            <option value="Cho">Cho</option>
-            <option value="Key">Key</option>
-            <option value="Bass">Bass</option>
-            <option value="Perc">Perc</option>
-            <option value="其他">その他</option>
+          <label>パート(複数選択可)</label>
+          <div class="checkbox-row" id="p-parts">
+            <label class="checkbox-chip"><input type="checkbox" value="Lead" /> Lead</label>
+            <label class="checkbox-chip"><input type="checkbox" value="1st" /> 1st</label>
+            <label class="checkbox-chip"><input type="checkbox" value="2nd" /> 2nd</label>
+            <label class="checkbox-chip"><input type="checkbox" value="3rd" /> 3rd</label>
+            <label class="checkbox-chip"><input type="checkbox" value="Bass" /> Bass</label>
+            <label class="checkbox-chip"><input type="checkbox" value="Perc" /> Perc</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="p-motivation">バンド参加の意欲</label>
+          <select id="p-motivation">
+            <option value="">未設定</option>
+            <option value="とても参加したい">とても参加したい</option>
+            <option value="参加したい">参加したい</option>
+            <option value="忙しいけど可能">忙しいけど可能</option>
+            <option value="難しい">難しい</option>
           </select>
         </div>
         <div class="form-group">
