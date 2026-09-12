@@ -26,59 +26,84 @@ modal.addEventListener("click", (e) => {
 async function loadBands() {
   listEl.innerHTML = `<p class="loading">読み込み中...</p>`;
 
-  let query = supabase
-    .from("bands")
-    .select("*, profiles(display_name)")
-    .order("created_at", { ascending: false });
+  try {
+    let query = supabase
+      .from("bands")
+      .select("*, profiles(display_name)")
+      .order("created_at", { ascending: false });
 
-  if (filterOpen.checked) query = query.eq("status", "募集中");
+    if (filterOpen.checked) query = query.eq("status", "募集中");
 
-  const { data, error } = await query;
+    const { data, error } = await withTimeout(query);
 
-  if (error) {
-    listEl.innerHTML = `<p class="empty-state">読み込みに失敗しました。時間をおいて再度お試しください。</p>`;
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    listEl.innerHTML = `<p class="empty-state">まだ投稿がありません。最初の募集を出してみましょう。</p>`;
-    return;
-  }
-
-  // この一覧分のバンドに対する「パート別」リアクションをまとめて取得
-  const bandIds = data.map((b) => b.id);
-  const { data: reactionRows } = await supabase
-    .from("reactions")
-    .select("band_id, user_id, part")
-    .in("band_id", bandIds);
-
-  // reactionMap[bandId][part] = { count, reactedByMe }
-  const reactionMap = {};
-  (reactionRows || []).forEach((r) => {
-    if (!reactionMap[r.band_id]) reactionMap[r.band_id] = {};
-    if (!reactionMap[r.band_id][r.part]) {
-      reactionMap[r.band_id][r.part] = { count: 0, reactedByMe: false };
+    if (error) {
+      showLoadError();
+      return;
     }
-    reactionMap[r.band_id][r.part].count += 1;
-    if (r.user_id === user.id) reactionMap[r.band_id][r.part].reactedByMe = true;
-  });
 
-  listEl.innerHTML = data
-    .map((band) => renderBandCard(band, user.id, reactionMap[band.id] ?? {}))
-    .join("");
+    if (!data || data.length === 0) {
+      listEl.innerHTML = `<p class="empty-state">まだ投稿がありません。最初の募集を出してみましょう。</p>`;
+      return;
+    }
 
-  // 締切・削除・パート別リアクションボタンのイベントを後付け
-  listEl.querySelectorAll("[data-close]").forEach((btn) =>
-    btn.addEventListener("click", () => closeBand(btn.dataset.close))
-  );
-  listEl.querySelectorAll("[data-delete]").forEach((btn) =>
-    btn.addEventListener("click", () => deleteBand(btn.dataset.delete))
-  );
-  listEl.querySelectorAll("[data-react]").forEach((btn) =>
-    btn.addEventListener("click", () =>
-      toggleReaction(btn.dataset.react, btn.dataset.part, btn.dataset.reacted === "true")
-    )
-  );
+    // この一覧分のバンドに対する「パート別」リアクションをまとめて取得
+    const bandIds = data.map((b) => b.id);
+    const { data: reactionRows } = await withTimeout(
+      supabase.from("reactions").select("band_id, user_id, part").in("band_id", bandIds)
+    );
+
+    // reactionMap[bandId][part] = { count, reactedByMe }
+    const reactionMap = {};
+    (reactionRows || []).forEach((r) => {
+      if (!reactionMap[r.band_id]) reactionMap[r.band_id] = {};
+      if (!reactionMap[r.band_id][r.part]) {
+        reactionMap[r.band_id][r.part] = { count: 0, reactedByMe: false };
+      }
+      reactionMap[r.band_id][r.part].count += 1;
+      if (r.user_id === user.id) reactionMap[r.band_id][r.part].reactedByMe = true;
+    });
+
+    listEl.innerHTML = data
+      .map((band) => renderBandCard(band, user.id, reactionMap[band.id] ?? {}))
+      .join("");
+
+    // 締切・削除・パート別リアクションボタンのイベントを後付け
+    listEl.querySelectorAll("[data-close]").forEach((btn) =>
+      btn.addEventListener("click", () => closeBand(btn.dataset.close))
+    );
+    listEl.querySelectorAll("[data-delete]").forEach((btn) =>
+      btn.addEventListener("click", () => deleteBand(btn.dataset.delete))
+    );
+    listEl.querySelectorAll("[data-react]").forEach((btn) =>
+      btn.addEventListener("click", () =>
+        toggleReaction(btn.dataset.react, btn.dataset.part, btn.dataset.reacted === "true")
+      )
+    );
+  } catch (e) {
+    showLoadError();
+  }
+}
+
+// SupabaseがスリープからOnになる直後など、応答が遅い時に
+// 「読み込み中」が永遠に固まらないようにするタイムアウト処理
+function withTimeout(promise, ms = 12000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+  ]);
+}
+
+function showLoadError() {
+  listEl.innerHTML = `
+    <div class="empty-state">
+      読み込みに時間がかかっています。Supabaseがスリープから復帰している可能性があります。
+      少し待ってから、もう一度お試しください。
+      <div style="margin-top:14px;">
+        <button class="btn btn-primary btn-sm" id="retry-load">もう一度読み込む</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("retry-load")?.addEventListener("click", loadBands);
 }
 
 function renderBandCard(band, myId, partReactions) {
