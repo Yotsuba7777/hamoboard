@@ -45,22 +45,57 @@ async function loadBands() {
     return;
   }
 
-  listEl.innerHTML = data.map((band) => renderBandCard(band, user.id)).join("");
+  // この一覧分のバンドに対する「パート別」リアクションをまとめて取得
+  const bandIds = data.map((b) => b.id);
+  const { data: reactionRows } = await supabase
+    .from("reactions")
+    .select("band_id, user_id, part")
+    .in("band_id", bandIds);
 
-  // 締切・削除ボタンのイベントを後付け
+  // reactionMap[bandId][part] = { count, reactedByMe }
+  const reactionMap = {};
+  (reactionRows || []).forEach((r) => {
+    if (!reactionMap[r.band_id]) reactionMap[r.band_id] = {};
+    if (!reactionMap[r.band_id][r.part]) {
+      reactionMap[r.band_id][r.part] = { count: 0, reactedByMe: false };
+    }
+    reactionMap[r.band_id][r.part].count += 1;
+    if (r.user_id === user.id) reactionMap[r.band_id][r.part].reactedByMe = true;
+  });
+
+  listEl.innerHTML = data
+    .map((band) => renderBandCard(band, user.id, reactionMap[band.id] ?? {}))
+    .join("");
+
+  // 締切・削除・パート別リアクションボタンのイベントを後付け
   listEl.querySelectorAll("[data-close]").forEach((btn) =>
     btn.addEventListener("click", () => closeBand(btn.dataset.close))
   );
   listEl.querySelectorAll("[data-delete]").forEach((btn) =>
     btn.addEventListener("click", () => deleteBand(btn.dataset.delete))
   );
+  listEl.querySelectorAll("[data-react]").forEach((btn) =>
+    btn.addEventListener("click", () =>
+      toggleReaction(btn.dataset.react, btn.dataset.part, btn.dataset.reacted === "true")
+    )
+  );
 }
 
-function renderBandCard(band, myId) {
+function renderBandCard(band, myId, partReactions) {
   const isOpen = band.status === "募集中";
   const leaderName = band.profiles?.display_name ?? "不明";
-  const tags = (band.needed_parts || [])
-    .map((p) => `<span class="tag">${escapeHtml(p)}</span>`)
+  const parts = band.needed_parts || [];
+  const partButtons = parts
+    .map((p) => {
+      const r = partReactions[p] ?? { count: 0, reactedByMe: false };
+      return `
+        <button class="part-reaction ${r.reactedByMe ? "active" : ""}" data-react="${band.id}" data-part="${escapeHtml(p)}" data-reacted="${r.reactedByMe}">
+          <span class="part-reaction-name">${escapeHtml(p)}</span>
+          <span class="part-reaction-heart">${r.reactedByMe ? "♥" : "♡"}</span>
+          <span class="part-reaction-count">${r.count}</span>
+        </button>
+      `;
+    })
     .join("");
   const deadline = band.deadline
     ? `締切：${band.deadline}`
@@ -73,7 +108,8 @@ function renderBandCard(band, myId) {
       <div class="band-title">${escapeHtml(band.title)}</div>
       ${band.genre ? `<div class="band-meta">${escapeHtml(band.genre)}</div>` : ""}
       ${band.description ? `<div class="band-desc">${escapeHtml(band.description)}</div>` : ""}
-      ${tags ? `<div class="tag-row">${tags}</div>` : ""}
+      ${partButtons ? `<div class="part-reaction-row">${partButtons}</div>` : ""}
+      <div class="hint">気になるパートの♡を押すと、リーダーに伝わります</div>
       <div class="band-meta">${deadline}　リーダー：${escapeHtml(leaderName)}${band.contact ? `　連絡先：${escapeHtml(band.contact)}` : ""}</div>
       ${
         isMine
@@ -85,6 +121,20 @@ function renderBandCard(band, myId) {
       }
     </div>
   `;
+}
+
+async function toggleReaction(bandId, part, currentlyReacted) {
+  if (currentlyReacted) {
+    await supabase
+      .from("reactions")
+      .delete()
+      .eq("band_id", bandId)
+      .eq("user_id", user.id)
+      .eq("part", part);
+  } else {
+    await supabase.from("reactions").insert({ band_id: bandId, user_id: user.id, part });
+  }
+  loadBands();
 }
 
 async function closeBand(id) {

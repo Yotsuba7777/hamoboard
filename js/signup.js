@@ -35,7 +35,7 @@ form.addEventListener("submit", async (e) => {
     email,
     password,
     options: {
-      data: { display_name, grade, part: "未設定" },
+      data: { display_name, grade },
     },
   });
 

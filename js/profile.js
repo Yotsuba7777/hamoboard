@@ -21,9 +21,14 @@ async function loadProfile() {
   if (error || !data) return;
 
   document.getElementById("p-name").value = data.display_name || "";
-  document.getElementById("p-part").value = data.part || "未設定";
   document.getElementById("p-grade").value = data.grade || "";
   document.getElementById("p-bio").value = data.bio || "";
+  document.getElementById("p-motivation").value = data.motivation || "";
+
+  const selectedParts = data.parts || [];
+  document
+    .querySelectorAll('#p-parts input[type="checkbox"]')
+    .forEach((c) => (c.checked = selectedParts.includes(c.value)));
 }
 
 form.addEventListener("submit", async (e) => {
@@ -33,9 +38,14 @@ form.addEventListener("submit", async (e) => {
   saveBtn.disabled = true;
   saveBtn.textContent = "保存中...";
 
+  const parts = Array.from(
+    document.querySelectorAll('#p-parts input[type="checkbox"]:checked')
+  ).map((c) => c.value);
+
   const payload = {
     display_name: document.getElementById("p-name").value.trim(),
-    part: document.getElementById("p-part").value,
+    parts,
+    motivation: document.getElementById("p-motivation").value || null,
     grade: document.getElementById("p-grade").value.trim(),
     bio: document.getElementById("p-bio").value.trim(),
   };
