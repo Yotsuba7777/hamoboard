@@ -1,12 +1,6 @@
 import { supabase } from "./supabase-client.js";
 import { requireAuth, renderNav } from "./nav.js";
 
-const user = await requireAuth();
-if (user) {
-  renderNav("board");
-  loadBands();
-}
-
 const listEl = document.getElementById("band-list");
 const filterOpen = document.getElementById("filter-open");
 const modal = document.getElementById("band-modal");
@@ -15,6 +9,12 @@ const closeBtn = document.getElementById("close-modal");
 const form = document.getElementById("band-form");
 const submitBtn = document.getElementById("band-submit");
 const errorText = document.getElementById("band-error");
+
+const user = await requireAuth();
+if (user) {
+  renderNav("board");
+  loadBands();
+}
 
 filterOpen.addEventListener("change", loadBands);
 openBtn.addEventListener("click", () => modal.classList.add("open"));

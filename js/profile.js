@@ -1,15 +1,15 @@
 import { supabase } from "./supabase-client.js";
 import { requireAuth, renderNav } from "./nav.js";
 
+const form = document.getElementById("profile-form");
+const saveBtn = document.getElementById("profile-save");
+const msg = document.getElementById("profile-msg");
+
 const user = await requireAuth();
 if (user) {
   renderNav("profile");
   loadProfile();
 }
-
-const form = document.getElementById("profile-form");
-const saveBtn = document.getElementById("profile-save");
-const msg = document.getElementById("profile-msg");
 
 async function loadProfile() {
   const { data, error } = await supabase

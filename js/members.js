@@ -1,13 +1,13 @@
 import { supabase } from "./supabase-client.js";
 import { requireAuth, renderNav } from "./nav.js";
 
+const listEl = document.getElementById("member-list");
+
 const user = await requireAuth();
 if (user) {
   renderNav("members");
   loadMembers();
 }
-
-const listEl = document.getElementById("member-list");
 
 async function loadMembers() {
   const { data, error } = await supabase
