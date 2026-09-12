@@ -86,7 +86,7 @@ async function loadBands() {
 
 // SupabaseがスリープからOnになる直後など、応答が遅い時に
 // 「読み込み中」が永遠に固まらないようにするタイムアウト処理
-function withTimeout(promise, ms = 12000) {
+function withTimeout(promise, ms = 6000) {
   return Promise.race([
     promise,
     new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
