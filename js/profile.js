@@ -64,3 +64,32 @@ form.addEventListener("submit", async (e) => {
   msg.style.color = "#3e8f84";
   msg.textContent = "保存しました。";
 });
+
+const deleteBtn = document.getElementById("delete-account-btn");
+const deleteMsg = document.getElementById("delete-account-msg");
+
+deleteBtn.addEventListener("click", async () => {
+  const step1 = confirm(
+    "本当に退会しますか？\n投稿・プロフィールなど、すべてのデータが完全に削除され、元に戻せません。"
+  );
+  if (!step1) return;
+
+  const step2 = confirm("最終確認です。本当によろしいですか？");
+  if (!step2) return;
+
+  deleteBtn.disabled = true;
+  deleteBtn.textContent = "処理中...";
+
+  const { error } = await supabase.rpc("delete_own_account");
+
+  if (error) {
+    deleteBtn.disabled = false;
+    deleteBtn.textContent = "退会する(アカウントを削除)";
+    deleteMsg.textContent = "削除に失敗しました。時間をおいて再度お試しください。";
+    return;
+  }
+
+  await supabase.auth.signOut();
+  alert("退会が完了しました。ご利用ありがとうございました。");
+  window.location.href = "login.html";
+});
