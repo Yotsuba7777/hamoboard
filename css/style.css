@@ -273,6 +273,49 @@ button {
   margin-top: 4px;
 }
 
+.part-reaction-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.part-reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--plum-soft);
+  background: transparent;
+  color: #d9cfe6;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.part-reaction:active {
+  transform: scale(0.96);
+}
+
+.part-reaction.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--plum);
+}
+
+.part-reaction-name {
+  color: var(--mint);
+}
+
+.part-reaction.active .part-reaction-name {
+  color: var(--plum);
+}
+
+.part-reaction-heart {
+  font-size: 13px;
+}
+
 /* ---------- member card ---------- */
 .member-card {
   background: var(--bg-tint);
@@ -315,6 +358,21 @@ button {
   font-size: 12.5px;
   font-weight: 700;
 }
+
+.motivation-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.motivation-1 { background: #fdecc8; color: #8a5a00; }
+.motivation-2 { background: #e3f3ef; color: var(--mint-dark); }
+.motivation-3 { background: var(--bg-tint); color: var(--muted); }
+.motivation-4 { background: #f6e6e3; color: var(--danger); }
 
 .member-bio {
   color: var(--muted);
