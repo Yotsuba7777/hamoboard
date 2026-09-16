@@ -60,8 +60,11 @@ grant execute on function check_invite_code(text) to anon, authenticated;
 create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null,
-  part text default '未設定',
+  parts text[] not null default '{}',
+  motivation text default '',
   grade text default '',
+  period text default '',
+  favorite_artist text default '',
   bio text default '',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -85,7 +88,7 @@ create trigger profiles_set_updated_at
   for each row execute function set_updated_at();
 
 -- 新規会員登録が完了したら、自動的にprofilesへ1行作る
--- (サインアップ時に渡した display_name / part / grade を拾う)
+-- (サインアップ時に渡した display_name / grade を拾う)
 create or replace function handle_new_user()
 returns trigger
 language plpgsql
@@ -93,11 +96,10 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, display_name, part, grade)
+  insert into public.profiles (id, display_name, grade)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'display_name', '名称未設定'),
-    coalesce(new.raw_user_meta_data->>'part', '未設定'),
     coalesce(new.raw_user_meta_data->>'grade', '')
   );
   return new;
@@ -118,7 +120,7 @@ create table if not exists bands (
   genre text default '',
   description text default '',
   needed_parts text[] not null default '{}',
-  deadline date,
+  deadline text,
   status text not null default '募集中' check (status in ('募集中', '締切')),
   -- profiles(id)を参照することで、投稿一覧を取得するときに
   -- リーダーの表示名を一緒に(JOINで)取得できるようにしている
@@ -161,6 +163,19 @@ create trigger bands_set_updated_at
 -- ------------------------------------------------------------
 create or replace view keep_alive as select 1 as ok;
 grant select on keep_alive to anon;
+
+-- ------------------------------------------------------------
+-- 5. 機能追加分の反映(既存のSupabaseプロジェクトを更新する場合)
+--    新規セットアップの場合は上のCREATE TABLEに既に含まれているため不要です。
+--    既にプロジェクトを作成済みの場合は、SQL Editorにこのブロックだけを
+--    貼り付けてRUNしてください。
+-- ------------------------------------------------------------
+alter table profiles add column if not exists parts text[] not null default '{}';
+alter table profiles add column if not exists motivation text default '';
+alter table profiles add column if not exists period text default '';
+alter table profiles add column if not exists favorite_artist text default '';
+
+alter table bands alter column deadline type text using deadline::text;
 
 -- ============================================================
 -- 以上でテーブル・権限設定は完了です。

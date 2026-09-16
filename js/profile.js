@@ -22,6 +22,8 @@ async function loadProfile() {
 
   document.getElementById("p-name").value = data.display_name || "";
   document.getElementById("p-grade").value = data.grade || "";
+  document.getElementById("p-period").value = data.period || "";
+  document.getElementById("p-artist").value = data.favorite_artist || "";
   document.getElementById("p-bio").value = data.bio || "";
   document.getElementById("p-motivation").value = data.motivation || "";
 
@@ -35,8 +37,6 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   msg.style.color = "";
   msg.textContent = "";
-  saveBtn.disabled = true;
-  saveBtn.textContent = "保存中...";
 
   const parts = Array.from(
     document.querySelectorAll('#p-parts input[type="checkbox"]:checked')
@@ -47,8 +47,19 @@ form.addEventListener("submit", async (e) => {
     parts,
     motivation: document.getElementById("p-motivation").value || null,
     grade: document.getElementById("p-grade").value.trim(),
+    period: document.getElementById("p-period").value.trim(),
+    favorite_artist: document.getElementById("p-artist").value.trim(),
     bio: document.getElementById("p-bio").value.trim(),
   };
+
+  if (!payload.display_name || parts.length === 0 || !payload.motivation || !payload.grade) {
+    msg.style.color = "#c0574a";
+    msg.textContent = "名前・パート・参加意欲・学年は必須です。";
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = "保存中...";
 
   const { error } = await supabase.from("profiles").update(payload).eq("id", user.id);
 

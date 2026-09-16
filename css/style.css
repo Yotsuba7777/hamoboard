@@ -371,12 +371,18 @@ button {
 
 .motivation-1 { background: #fdecc8; color: #8a5a00; }
 .motivation-2 { background: #e3f3ef; color: var(--mint-dark); }
-.motivation-3 { background: var(--bg-tint); color: var(--muted); }
+.motivation-3 { background: var(--bg-tint); color: var(--muted); border: 1.5px solid var(--muted); }
 .motivation-4 { background: #f6e6e3; color: var(--danger); }
 
 .member-bio {
   color: var(--muted);
   font-size: 13.5px;
+}
+
+.member-artist {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
 }
 
 /* ---------- forms ---------- */
@@ -418,6 +424,15 @@ select:focus {
 textarea {
   resize: vertical;
   min-height: 90px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row > div {
+  flex: 1;
 }
 
 .checkbox-row {
@@ -503,6 +518,30 @@ textarea {
   color: var(--gold);
   font-weight: 700;
   text-decoration: none;
+}
+
+.data-usage-notice {
+  background: var(--bg-tint);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.consent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.consent-row input {
+  margin-top: 3px;
+  accent-color: var(--gold);
 }
 
 /* ---------- misc ---------- */

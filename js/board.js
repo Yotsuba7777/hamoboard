@@ -123,7 +123,7 @@ function renderBandCard(band, myId, partReactions) {
     })
     .join("");
   const deadline = band.deadline
-    ? `締切：${band.deadline}`
+    ? `締切：${escapeHtml(band.deadline)}`
     : "締切：未定";
   const isMine = band.leader_id === myId;
 
@@ -189,7 +189,7 @@ form.addEventListener("submit", async (e) => {
     genre: document.getElementById("b-genre").value.trim(),
     description: document.getElementById("b-desc").value.trim(),
     needed_parts,
-    deadline: document.getElementById("b-deadline").value || null,
+    deadline: document.getElementById("b-deadline").value.trim() || null,
     contact: document.getElementById("b-contact").value.trim(),
     leader_id: user.id,
   };

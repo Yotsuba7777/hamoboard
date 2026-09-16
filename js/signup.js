@@ -3,9 +3,16 @@ import { supabase } from "./supabase-client.js";
 const form = document.getElementById("signup-form");
 const errorText = document.getElementById("error-text");
 const btn = document.getElementById("signup-btn");
+const agreeConsent = document.getElementById("agree-consent");
+
+agreeConsent.addEventListener("change", () => {
+  btn.disabled = !agreeConsent.checked;
+});
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (!agreeConsent.checked) return;
+
   errorText.textContent = "";
   btn.disabled = true;
   btn.textContent = "確認中...";

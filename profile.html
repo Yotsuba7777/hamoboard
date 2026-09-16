@@ -20,7 +20,7 @@
       <form id="profile-form">
         <div class="form-group">
           <label for="p-name">名前(表示名)</label>
-          <input type="text" id="p-name" required />
+          <input type="text" id="p-name" />
         </div>
         <div class="form-group">
           <label>パート(複数選択可)</label>
@@ -43,9 +43,19 @@
             <option value="難しい">難しい</option>
           </select>
         </div>
+        <div class="form-group form-row">
+          <div>
+            <label for="p-period">期</label>
+            <input type="text" id="p-period" placeholder="例:15" />
+          </div>
+          <div>
+            <label for="p-grade">学年</label>
+            <input type="text" id="p-grade" placeholder="例:2年" />
+          </div>
+        </div>
         <div class="form-group">
-          <label for="p-grade">学年</label>
-          <input type="text" id="p-grade" placeholder="例:2年" />
+          <label for="p-artist">好きなアーティスト</label>
+          <input type="text" id="p-artist" placeholder="例:back number" />
         </div>
         <div class="form-group">
           <label for="p-bio">ひとことプロフィール</label>
