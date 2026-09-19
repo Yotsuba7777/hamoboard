@@ -132,6 +132,79 @@ button {
   color: #a091b3;
 }
 
+.nav-notify {
+  position: relative;
+}
+
+.nav-bell {
+  position: relative;
+  font-size: 16px;
+}
+
+.notify-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: var(--danger);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 999px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.notify-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  width: 320px;
+  max-width: 80vw;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 8px;
+  z-index: 60;
+}
+
+.notify-panel.open {
+  display: block;
+}
+
+.notify-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.notify-item + .notify-item {
+  margin-top: 4px;
+}
+
+.notify-item.unread {
+  background: var(--bg-tint);
+}
+
+.notify-time {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.notify-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* ---------- buttons ---------- */
 .btn {
   display: inline-flex;

@@ -158,14 +158,96 @@ create trigger bands_set_updated_at
   for each row execute function set_updated_at();
 
 -- ------------------------------------------------------------
--- 4. 生存確認(keep-alive)用の超軽量ビュー
+-- 4. reactions : 掲示板の♡リアクション(パートごと)
+-- ------------------------------------------------------------
+create table if not exists reactions (
+  id uuid primary key default gen_random_uuid(),
+  band_id uuid not null references bands(id) on delete cascade,
+  user_id uuid not null references profiles(id) on delete cascade,
+  part text not null,
+  created_at timestamptz not null default now(),
+  unique (band_id, user_id, part)
+);
+
+alter table reactions enable row level security;
+
+create policy "reactions_select_authenticated"
+  on reactions for select
+  to authenticated
+  using (true);
+
+create policy "reactions_insert_own"
+  on reactions for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+create policy "reactions_delete_own"
+  on reactions for delete
+  to authenticated
+  using (auth.uid() = user_id);
+
+-- ------------------------------------------------------------
+-- 5. notifications : 自分の募集にリアクションが来た通知
+--    reactionsへのinsertをトリガーに自動で1行作られる
+--    (リーダー自身のリアクションは通知しない)
+-- ------------------------------------------------------------
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles(id) on delete cascade,
+  band_id uuid not null references bands(id) on delete cascade,
+  actor_id uuid not null references profiles(id) on delete cascade,
+  part text not null,
+  is_read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table notifications enable row level security;
+
+create policy "notifications_select_own"
+  on notifications for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+create policy "notifications_update_own"
+  on notifications for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create or replace function handle_new_reaction()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_leader_id uuid;
+begin
+  select leader_id into v_leader_id from bands where id = new.band_id;
+
+  if v_leader_id is not null and v_leader_id <> new.user_id then
+    insert into notifications (user_id, band_id, actor_id, part)
+    values (v_leader_id, new.band_id, new.user_id, new.part);
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_reaction_created on reactions;
+create trigger on_reaction_created
+  after insert on reactions
+  for each row execute function handle_new_reaction();
+
+-- ------------------------------------------------------------
+-- 6. 生存確認(keep-alive)用の超軽量ビュー
 --    GitHub Actionsから定期的にSELECTするためだけの存在
 -- ------------------------------------------------------------
 create or replace view keep_alive as select 1 as ok;
 grant select on keep_alive to anon;
 
 -- ------------------------------------------------------------
--- 5. 機能追加分の反映(既存のSupabaseプロジェクトを更新する場合)
+-- 7. 機能追加分の反映(既存のSupabaseプロジェクトを更新する場合)
 --    新規セットアップの場合は上のCREATE TABLEに既に含まれているため不要です。
 --    既にプロジェクトを作成済みの場合は、SQL Editorにこのブロックだけを
 --    貼り付けてRUNしてください。
@@ -176,6 +258,57 @@ alter table profiles add column if not exists period text default '';
 alter table profiles add column if not exists favorite_artist text default '';
 
 alter table bands alter column deadline type text using deadline::text;
+
+-- notifications機能の追加分(reactionsテーブルは既存のものをそのまま利用)
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles(id) on delete cascade,
+  band_id uuid not null references bands(id) on delete cascade,
+  actor_id uuid not null references profiles(id) on delete cascade,
+  part text not null,
+  is_read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table notifications enable row level security;
+
+drop policy if exists "notifications_select_own" on notifications;
+create policy "notifications_select_own"
+  on notifications for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "notifications_update_own" on notifications;
+create policy "notifications_update_own"
+  on notifications for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create or replace function handle_new_reaction()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_leader_id uuid;
+begin
+  select leader_id into v_leader_id from bands where id = new.band_id;
+
+  if v_leader_id is not null and v_leader_id <> new.user_id then
+    insert into notifications (user_id, band_id, actor_id, part)
+    values (v_leader_id, new.band_id, new.user_id, new.part);
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_reaction_created on reactions;
+create trigger on_reaction_created
+  after insert on reactions
+  for each row execute function handle_new_reaction();
 
 -- ============================================================
 -- 以上でテーブル・権限設定は完了です。
