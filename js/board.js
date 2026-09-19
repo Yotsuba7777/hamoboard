@@ -66,18 +66,19 @@ async function loadBands() {
     // この一覧分のバンドに対する「パート別」リアクションをまとめて取得
     const bandIds = data.map((b) => b.id);
     const { data: reactionRows } = await withTimeout(
-      supabase.from("reactions").select("band_id, user_id, part").in("band_id", bandIds)
+      supabase.from("reactions").select("band_id, user_id, part, profiles(display_name)").in("band_id", bandIds)
     );
 
-    // reactionMap[bandId][part] = { count, reactedByMe }
+    // reactionMap[bandId][part] = { count, reactedByMe, names }
     const reactionMap = {};
     (reactionRows || []).forEach((r) => {
       if (!reactionMap[r.band_id]) reactionMap[r.band_id] = {};
       if (!reactionMap[r.band_id][r.part]) {
-        reactionMap[r.band_id][r.part] = { count: 0, reactedByMe: false };
+        reactionMap[r.band_id][r.part] = { count: 0, reactedByMe: false, names: [] };
       }
       reactionMap[r.band_id][r.part].count += 1;
       if (r.user_id === user.id) reactionMap[r.band_id][r.part].reactedByMe = true;
+      reactionMap[r.band_id][r.part].names.push(r.profiles?.display_name ?? "不明");
     });
 
     bandsById = {};
@@ -135,7 +136,7 @@ function renderBandCard(band, myId, partReactions, isHost) {
   const parts = band.needed_parts || [];
   const partButtons = parts
     .map((p) => {
-      const r = partReactions[p] ?? { count: 0, reactedByMe: false };
+      const r = partReactions[p] ?? { count: 0, reactedByMe: false, names: [] };
       return `
         <button class="part-reaction ${r.reactedByMe ? "active" : ""}" data-react="${band.id}" data-part="${escapeHtml(p)}" data-reacted="${r.reactedByMe}">
           <span class="part-reaction-name">${escapeHtml(p)}</span>
@@ -145,11 +146,15 @@ function renderBandCard(band, myId, partReactions, isHost) {
       `;
     })
     .join("");
+  const reactionNames = band.reactions_public ? renderReactionNames(parts, partReactions) : "";
   const deadline = band.deadline
     ? `締切：${escapeHtml(band.deadline)}`
     : "締切：未定";
   const isMine = band.leader_id === myId;
   const canDelete = isMine || isHost;
+  const hint = band.reactions_public
+    ? "気になるパートの♡を押すと、リーダーに伝わります(この募集は誰が押したか名前が公開されます)"
+    : "気になるパートの♡を押すと、リーダーに伝わります";
 
   return `
     <div class="band-card">
@@ -158,7 +163,8 @@ function renderBandCard(band, myId, partReactions, isHost) {
       ${band.genre ? `<div class="band-meta">${escapeHtml(band.genre)}</div>` : ""}
       ${band.description ? `<div class="band-desc">${escapeHtml(band.description)}</div>` : ""}
       ${partButtons ? `<div class="part-reaction-row">${partButtons}</div>` : ""}
-      <div class="hint">気になるパートの♡を押すと、リーダーに伝わります</div>
+      ${reactionNames}
+      <div class="hint">${hint}</div>
       <div class="band-meta">${deadline}　リーダー：${escapeHtml(leaderName)}${band.contact ? `　連絡先：${escapeHtml(band.contact)}` : ""}</div>
       ${
         canDelete
@@ -171,6 +177,19 @@ function renderBandCard(band, myId, partReactions, isHost) {
       }
     </div>
   `;
+}
+
+function renderReactionNames(parts, partReactions) {
+  const lines = parts
+    .map((p) => {
+      const r = partReactions[p];
+      if (!r || r.names.length === 0) return null;
+      return `${escapeHtml(p)}：${r.names.map(escapeHtml).join("・")}`;
+    })
+    .filter(Boolean);
+
+  if (lines.length === 0) return "";
+  return `<div class="reaction-names">リアクションしたメンバー　${lines.join("　")}</div>`;
 }
 
 async function toggleReaction(bandId, part, currentlyReacted) {
@@ -197,10 +216,11 @@ function openEditModal(id) {
   document.getElementById("b-desc").value = band.description || "";
   document.getElementById("b-deadline").value = band.deadline || "";
   document.getElementById("b-contact").value = band.contact || "";
+  document.getElementById("b-reactions-public").checked = !!band.reactions_public;
 
   const needed = band.needed_parts || [];
   document
-    .querySelectorAll('#band-form input[type="checkbox"]')
+    .querySelectorAll('#b-parts input[type="checkbox"]')
     .forEach((c) => (c.checked = needed.includes(c.value)));
 
   modalTitle.textContent = "募集内容を編集";
@@ -228,7 +248,7 @@ form.addEventListener("submit", async (e) => {
   submitBtn.textContent = editingBandId ? "更新中..." : "投稿中...";
 
   const needed_parts = Array.from(
-    document.querySelectorAll('#band-form input[type="checkbox"]:checked')
+    document.querySelectorAll('#b-parts input[type="checkbox"]:checked')
   ).map((c) => c.value);
 
   const payload = {
@@ -238,6 +258,7 @@ form.addEventListener("submit", async (e) => {
     needed_parts,
     deadline: document.getElementById("b-deadline").value.trim() || null,
     contact: document.getElementById("b-contact").value.trim(),
+    reactions_public: document.getElementById("b-reactions-public").checked,
   };
 
   const { error } = editingBandId

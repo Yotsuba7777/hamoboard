@@ -124,6 +124,8 @@ create table if not exists bands (
   needed_parts text[] not null default '{}',
   deadline text,
   status text not null default '募集中' check (status in ('募集中', '締切')),
+  -- trueの場合、誰がどのパートにリアクションしたか全員に表示する
+  reactions_public boolean not null default false,
   -- profiles(id)を参照することで、投稿一覧を取得するときに
   -- リーダーの表示名を一緒に(JOINで)取得できるようにしている
   leader_id uuid not null references profiles(id) on delete cascade,
@@ -264,6 +266,7 @@ alter table profiles add column if not exists favorite_artist text default '';
 alter table profiles add column if not exists is_host boolean not null default false;
 
 alter table bands alter column deadline type text using deadline::text;
+alter table bands add column if not exists reactions_public boolean not null default false;
 
 -- 募集の削除を「投稿者本人」または「ホスト」だけができるように更新
 drop policy if exists "bands_delete_own" on bands;

@@ -352,6 +352,11 @@ button {
   gap: 8px;
 }
 
+.reaction-names {
+  color: #b8acc9;
+  font-size: 11.5px;
+}
+
 .part-reaction {
   display: inline-flex;
   align-items: center;
