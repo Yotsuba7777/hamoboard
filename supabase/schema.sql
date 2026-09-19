@@ -66,6 +66,8 @@ create table if not exists profiles (
   period text default '',
   favorite_artist text default '',
   bio text default '',
+  -- ホスト(サークル運営側)は自分以外の投稿も削除できる
+  is_host boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -148,10 +150,13 @@ create policy "bands_update_own"
   using (auth.uid() = leader_id)
   with check (auth.uid() = leader_id);
 
-create policy "bands_delete_own"
+create policy "bands_delete_own_or_host"
   on bands for delete
   to authenticated
-  using (auth.uid() = leader_id);
+  using (
+    auth.uid() = leader_id
+    or exists (select 1 from profiles p where p.id = auth.uid() and p.is_host)
+  );
 
 create trigger bands_set_updated_at
   before update on bands
@@ -256,8 +261,20 @@ alter table profiles add column if not exists parts text[] not null default '{}'
 alter table profiles add column if not exists motivation text default '';
 alter table profiles add column if not exists period text default '';
 alter table profiles add column if not exists favorite_artist text default '';
+alter table profiles add column if not exists is_host boolean not null default false;
 
 alter table bands alter column deadline type text using deadline::text;
+
+-- 募集の削除を「投稿者本人」または「ホスト」だけができるように更新
+drop policy if exists "bands_delete_own" on bands;
+drop policy if exists "bands_delete_own_or_host" on bands;
+create policy "bands_delete_own_or_host"
+  on bands for delete
+  to authenticated
+  using (
+    auth.uid() = leader_id
+    or exists (select 1 from profiles p where p.id = auth.uid() and p.is_host)
+  );
 
 -- notifications機能の追加分(reactionsテーブルは既存のものをそのまま利用)
 create table if not exists notifications (

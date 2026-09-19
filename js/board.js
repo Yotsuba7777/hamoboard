@@ -13,10 +13,17 @@ const errorText = document.getElementById("band-error");
 
 let bandsById = {};
 let editingBandId = null;
+let isHost = false;
 
 const user = await requireAuth();
 if (user) {
   renderNav("board");
+  const { data: myProfile } = await supabase
+    .from("profiles")
+    .select("is_host")
+    .eq("id", user.id)
+    .single();
+  isHost = myProfile?.is_host ?? false;
   loadBands();
 }
 
@@ -77,7 +84,7 @@ async function loadBands() {
     data.forEach((band) => (bandsById[band.id] = band));
 
     listEl.innerHTML = data
-      .map((band) => renderBandCard(band, user.id, reactionMap[band.id] ?? {}))
+      .map((band) => renderBandCard(band, user.id, reactionMap[band.id] ?? {}, isHost))
       .join("");
 
     // 編集・締切・削除・パート別リアクションボタンのイベントを後付け
@@ -122,7 +129,7 @@ function showLoadError() {
   document.getElementById("retry-load")?.addEventListener("click", loadBands);
 }
 
-function renderBandCard(band, myId, partReactions) {
+function renderBandCard(band, myId, partReactions, isHost) {
   const isOpen = band.status === "募集中";
   const leaderName = band.profiles?.display_name ?? "不明";
   const parts = band.needed_parts || [];
@@ -142,6 +149,7 @@ function renderBandCard(band, myId, partReactions) {
     ? `締切：${escapeHtml(band.deadline)}`
     : "締切：未定";
   const isMine = band.leader_id === myId;
+  const canDelete = isMine || isHost;
 
   return `
     <div class="band-card">
@@ -153,11 +161,11 @@ function renderBandCard(band, myId, partReactions) {
       <div class="hint">気になるパートの♡を押すと、リーダーに伝わります</div>
       <div class="band-meta">${deadline}　リーダー：${escapeHtml(leaderName)}${band.contact ? `　連絡先：${escapeHtml(band.contact)}` : ""}</div>
       ${
-        isMine
+        canDelete
           ? `<div class="band-actions">
-              <button class="btn btn-ghost btn-sm" data-edit="${band.id}">編集</button>
-              ${isOpen ? `<button class="btn btn-ghost btn-sm" data-close="${band.id}">締切にする</button>` : ""}
-              <button class="btn btn-danger btn-sm" data-delete="${band.id}">削除</button>
+              ${isMine ? `<button class="btn btn-ghost btn-sm" data-edit="${band.id}">編集</button>` : ""}
+              ${isMine && isOpen ? `<button class="btn btn-ghost btn-sm" data-close="${band.id}">締切にする</button>` : ""}
+              ${canDelete ? `<button class="btn btn-danger btn-sm" data-delete="${band.id}">削除</button>` : ""}
             </div>`
           : ""
       }
