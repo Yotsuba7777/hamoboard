@@ -247,14 +247,33 @@ create trigger on_reaction_created
   for each row execute function handle_new_reaction();
 
 -- ------------------------------------------------------------
--- 6. 生存確認(keep-alive)用の超軽量ビュー
+-- 6. 締切済み募集の自動お片付け
+--    締切にしてから30日経った投稿を、毎日AM3:00(UTC)に自動削除する
+-- ------------------------------------------------------------
+create extension if not exists pg_cron;
+
+do $$
+begin
+  if exists (select 1 from cron.job where jobname = 'delete-old-closed-bands') then
+    perform cron.unschedule('delete-old-closed-bands');
+  end if;
+end $$;
+
+select cron.schedule(
+  'delete-old-closed-bands',
+  '0 3 * * *',
+  $$ delete from bands where status = '締切' and updated_at < now() - interval '30 days'; $$
+);
+
+-- ------------------------------------------------------------
+-- 7. 生存確認(keep-alive)用の超軽量ビュー
 --    GitHub Actionsから定期的にSELECTするためだけの存在
 -- ------------------------------------------------------------
 create or replace view keep_alive as select 1 as ok;
 grant select on keep_alive to anon;
 
 -- ------------------------------------------------------------
--- 7. 機能追加分の反映(既存のSupabaseプロジェクトを更新する場合)
+-- 8. 機能追加分の反映(既存のSupabaseプロジェクトを更新する場合)
 --    新規セットアップの場合は上のCREATE TABLEに既に含まれているため不要です。
 --    既にプロジェクトを作成済みの場合は、SQL Editorにこのブロックだけを
 --    貼り付けてRUNしてください。
@@ -329,6 +348,22 @@ drop trigger if exists on_reaction_created on reactions;
 create trigger on_reaction_created
   after insert on reactions
   for each row execute function handle_new_reaction();
+
+-- 締切済み募集の自動削除(締切から30日後、毎日AM3:00 UTCに実行)
+create extension if not exists pg_cron;
+
+do $$
+begin
+  if exists (select 1 from cron.job where jobname = 'delete-old-closed-bands') then
+    perform cron.unschedule('delete-old-closed-bands');
+  end if;
+end $$;
+
+select cron.schedule(
+  'delete-old-closed-bands',
+  '0 3 * * *',
+  $$ delete from bands where status = '締切' and updated_at < now() - interval '30 days'; $$
+);
 
 -- ============================================================
 -- 以上でテーブル・権限設定は完了です。
