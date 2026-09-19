@@ -4,11 +4,15 @@ import { requireAuth, renderNav } from "./nav.js";
 const listEl = document.getElementById("band-list");
 const filterOpen = document.getElementById("filter-open");
 const modal = document.getElementById("band-modal");
+const modalTitle = document.getElementById("band-modal-title");
 const openBtn = document.getElementById("open-new-band");
 const closeBtn = document.getElementById("close-modal");
 const form = document.getElementById("band-form");
 const submitBtn = document.getElementById("band-submit");
 const errorText = document.getElementById("band-error");
+
+let bandsById = {};
+let editingBandId = null;
 
 const user = await requireAuth();
 if (user) {
@@ -17,7 +21,13 @@ if (user) {
 }
 
 filterOpen.addEventListener("change", loadBands);
-openBtn.addEventListener("click", () => modal.classList.add("open"));
+openBtn.addEventListener("click", () => {
+  editingBandId = null;
+  form.reset();
+  modalTitle.textContent = "バンド募集を投稿";
+  submitBtn.textContent = "投稿する";
+  modal.classList.add("open");
+});
 closeBtn.addEventListener("click", () => modal.classList.remove("open"));
 modal.addEventListener("click", (e) => {
   if (e.target === modal) modal.classList.remove("open");
@@ -63,11 +73,17 @@ async function loadBands() {
       if (r.user_id === user.id) reactionMap[r.band_id][r.part].reactedByMe = true;
     });
 
+    bandsById = {};
+    data.forEach((band) => (bandsById[band.id] = band));
+
     listEl.innerHTML = data
       .map((band) => renderBandCard(band, user.id, reactionMap[band.id] ?? {}))
       .join("");
 
-    // 締切・削除・パート別リアクションボタンのイベントを後付け
+    // 編集・締切・削除・パート別リアクションボタンのイベントを後付け
+    listEl.querySelectorAll("[data-edit]").forEach((btn) =>
+      btn.addEventListener("click", () => openEditModal(btn.dataset.edit))
+    );
     listEl.querySelectorAll("[data-close]").forEach((btn) =>
       btn.addEventListener("click", () => closeBand(btn.dataset.close))
     );
@@ -139,6 +155,7 @@ function renderBandCard(band, myId, partReactions) {
       ${
         isMine
           ? `<div class="band-actions">
+              <button class="btn btn-ghost btn-sm" data-edit="${band.id}">編集</button>
               ${isOpen ? `<button class="btn btn-ghost btn-sm" data-close="${band.id}">締切にする</button>` : ""}
               <button class="btn btn-danger btn-sm" data-delete="${band.id}">削除</button>
             </div>`
@@ -162,6 +179,28 @@ async function toggleReaction(bandId, part, currentlyReacted) {
   loadBands();
 }
 
+function openEditModal(id) {
+  const band = bandsById[id];
+  if (!band) return;
+
+  editingBandId = id;
+  document.getElementById("b-title").value = band.title || "";
+  document.getElementById("b-genre").value = band.genre || "";
+  document.getElementById("b-desc").value = band.description || "";
+  document.getElementById("b-deadline").value = band.deadline || "";
+  document.getElementById("b-contact").value = band.contact || "";
+
+  const needed = band.needed_parts || [];
+  document
+    .querySelectorAll('#band-form input[type="checkbox"]')
+    .forEach((c) => (c.checked = needed.includes(c.value)));
+
+  modalTitle.textContent = "募集内容を編集";
+  submitBtn.textContent = "更新する";
+  errorText.textContent = "";
+  modal.classList.add("open");
+}
+
 async function closeBand(id) {
   if (!confirm("この募集を締切にしますか？")) return;
   await supabase.from("bands").update({ status: "締切" }).eq("id", id);
@@ -178,7 +217,7 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   errorText.textContent = "";
   submitBtn.disabled = true;
-  submitBtn.textContent = "投稿中...";
+  submitBtn.textContent = editingBandId ? "更新中..." : "投稿中...";
 
   const needed_parts = Array.from(
     document.querySelectorAll('#band-form input[type="checkbox"]:checked')
@@ -191,19 +230,23 @@ form.addEventListener("submit", async (e) => {
     needed_parts,
     deadline: document.getElementById("b-deadline").value.trim() || null,
     contact: document.getElementById("b-contact").value.trim(),
-    leader_id: user.id,
   };
 
-  const { error } = await supabase.from("bands").insert(payload);
+  const { error } = editingBandId
+    ? await supabase.from("bands").update(payload).eq("id", editingBandId)
+    : await supabase.from("bands").insert({ ...payload, leader_id: user.id });
 
   submitBtn.disabled = false;
-  submitBtn.textContent = "投稿する";
+  submitBtn.textContent = editingBandId ? "更新する" : "投稿する";
 
   if (error) {
-    errorText.textContent = "投稿に失敗しました。時間をおいて再度お試しください。";
+    errorText.textContent = editingBandId
+      ? "更新に失敗しました。時間をおいて再度お試しください。"
+      : "投稿に失敗しました。時間をおいて再度お試しください。";
     return;
   }
 
+  editingBandId = null;
   form.reset();
   modal.classList.remove("open");
   loadBands();
