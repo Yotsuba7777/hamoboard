@@ -147,6 +147,10 @@ function renderBandCard(band, myId, partReactions, isHost) {
     })
     .join("");
   const reactionNames = band.reactions_public ? renderReactionNames(parts, partReactions) : "";
+  const sheetLink =
+    band.sheet_music_url && /^https?:\/\//i.test(band.sheet_music_url)
+      ? `<a class="btn btn-ghost btn-sm" href="${escapeHtml(band.sheet_music_url)}" target="_blank" rel="noopener noreferrer" style="width:fit-content;">📄 楽譜を見る</a>`
+      : "";
   const deadline = band.deadline
     ? `締切：${escapeHtml(band.deadline)}`
     : "締切：未定";
@@ -164,6 +168,7 @@ function renderBandCard(band, myId, partReactions, isHost) {
       ${band.description ? `<div class="band-desc">${escapeHtml(band.description)}</div>` : ""}
       ${partButtons ? `<div class="part-reaction-row">${partButtons}</div>` : ""}
       ${reactionNames}
+      ${sheetLink}
       <div class="hint">${hint}</div>
       <div class="band-meta">${deadline}　リーダー：${escapeHtml(leaderName)}${band.contact ? `　連絡先：${escapeHtml(band.contact)}` : ""}</div>
       ${
@@ -216,6 +221,7 @@ function openEditModal(id) {
   document.getElementById("b-desc").value = band.description || "";
   document.getElementById("b-deadline").value = band.deadline || "";
   document.getElementById("b-contact").value = band.contact || "";
+  document.getElementById("b-sheet").value = band.sheet_music_url || "";
   document.getElementById("b-reactions-public").checked = !!band.reactions_public;
 
   const needed = band.needed_parts || [];
@@ -258,6 +264,7 @@ form.addEventListener("submit", async (e) => {
     needed_parts,
     deadline: document.getElementById("b-deadline").value.trim() || null,
     contact: document.getElementById("b-contact").value.trim(),
+    sheet_music_url: document.getElementById("b-sheet").value.trim(),
     reactions_public: document.getElementById("b-reactions-public").checked,
   };
 

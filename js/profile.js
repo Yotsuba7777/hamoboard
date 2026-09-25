@@ -24,6 +24,7 @@ async function loadProfile() {
   document.getElementById("p-grade").value = data.grade || "";
   document.getElementById("p-period").value = data.period || "";
   document.getElementById("p-artist").value = data.favorite_artist || "";
+  document.getElementById("p-attendance").value = data.attendance_number || "";
   document.getElementById("p-bio").value = data.bio || "";
   document.getElementById("p-motivation").value = data.motivation || "";
 
@@ -49,6 +50,7 @@ form.addEventListener("submit", async (e) => {
     grade: document.getElementById("p-grade").value.trim(),
     period: document.getElementById("p-period").value.trim(),
     favorite_artist: document.getElementById("p-artist").value.trim(),
+    attendance_number: document.getElementById("p-attendance").value.trim(),
     bio: document.getElementById("p-bio").value.trim(),
   };
 

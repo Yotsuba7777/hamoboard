@@ -685,6 +685,20 @@ textarea {
   margin-bottom: 24px;
 }
 
+.member-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.member-filters input,
+.member-filters select {
+  width: auto;
+  min-width: 160px;
+  flex: 1;
+}
+
 @media (max-width: 620px) {
   .nav-links {
     gap: 14px;

@@ -2,12 +2,21 @@ import { supabase } from "./supabase-client.js";
 import { requireAuth, renderNav } from "./nav.js";
 
 const listEl = document.getElementById("member-list");
+const nameFilter = document.getElementById("f-name");
+const gradeFilter = document.getElementById("f-grade");
+const partFilter = document.getElementById("f-part");
+
+let allMembers = [];
 
 const user = await requireAuth();
 if (user) {
   renderNav("members");
   loadMembers();
 }
+
+nameFilter.addEventListener("input", renderFilteredList);
+gradeFilter.addEventListener("change", renderFilteredList);
+partFilter.addEventListener("change", renderFilteredList);
 
 async function loadMembers() {
   const { data, error } = await supabase
@@ -20,12 +29,40 @@ async function loadMembers() {
     return;
   }
 
-  if (!data || data.length === 0) {
+  allMembers = data || [];
+
+  if (allMembers.length === 0) {
     listEl.innerHTML = `<p class="empty-state">まだメンバーが登録されていません。</p>`;
     return;
   }
 
-  listEl.innerHTML = data.map(renderMemberCard).join("");
+  populateGradeOptions(allMembers);
+  renderFilteredList();
+}
+
+function populateGradeOptions(members) {
+  const grades = Array.from(new Set(members.map((m) => m.grade).filter(Boolean))).sort();
+  gradeFilter.innerHTML =
+    `<option value="">学年:すべて</option>` +
+    grades.map((g) => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("");
+}
+
+function renderFilteredList() {
+  const nameQuery = nameFilter.value.trim().toLowerCase();
+  const gradeQuery = gradeFilter.value;
+  const partQuery = partFilter.value;
+
+  const filtered = allMembers.filter((m) => {
+    if (nameQuery && !(m.display_name || "").toLowerCase().includes(nameQuery)) return false;
+    if (gradeQuery && m.grade !== gradeQuery) return false;
+    if (partQuery && !(m.parts || []).includes(partQuery)) return false;
+    return true;
+  });
+
+  listEl.innerHTML =
+    filtered.length > 0
+      ? filtered.map(renderMemberCard).join("")
+      : `<p class="empty-state">条件に一致するメンバーがいません。</p>`;
 }
 
 const MOTIVATION_CLASS = {
@@ -47,6 +84,7 @@ function renderMemberCard(m) {
         <div>
           <div class="member-name">${escapeHtml(m.display_name)}${gradeLabel}</div>
           <div class="member-part">パート：${escapeHtml(parts)}</div>
+          ${m.attendance_number ? `<div class="member-artist">出席番号：${escapeHtml(m.attendance_number)}</div>` : ""}
           ${m.favorite_artist ? `<div class="member-artist">好きなアーティスト：${escapeHtml(m.favorite_artist)}</div>` : ""}
         </div>
       </div>

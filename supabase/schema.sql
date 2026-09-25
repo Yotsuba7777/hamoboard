@@ -66,6 +66,8 @@ create table if not exists profiles (
   period text default '',
   favorite_artist text default '',
   bio text default '',
+  -- 出席管理用の番号(自由入力・番号の割り振りや重複チェックは別システムで行う)
+  attendance_number text default '',
   -- ホスト(サークル運営側)は自分以外の投稿も削除できる
   is_host boolean not null default false,
   created_at timestamptz not null default now(),
@@ -90,7 +92,7 @@ create trigger profiles_set_updated_at
   for each row execute function set_updated_at();
 
 -- 新規会員登録が完了したら、自動的にprofilesへ1行作る
--- (サインアップ時に渡した display_name / grade を拾う)
+-- (サインアップ時に渡した display_name / period / grade を拾う)
 create or replace function handle_new_user()
 returns trigger
 language plpgsql
@@ -98,10 +100,11 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, display_name, grade)
+  insert into public.profiles (id, display_name, period, grade)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'display_name', '名称未設定'),
+    coalesce(new.raw_user_meta_data->>'period', ''),
     coalesce(new.raw_user_meta_data->>'grade', '')
   );
   return new;
@@ -126,6 +129,8 @@ create table if not exists bands (
   status text not null default '募集中' check (status in ('募集中', '締切')),
   -- trueの場合、誰がどのパートにリアクションしたか全員に表示する
   reactions_public boolean not null default false,
+  -- 楽譜のURL(任意入力、形式チェックはしない)
+  sheet_music_url text default '',
   -- profiles(id)を参照することで、投稿一覧を取得するときに
   -- リーダーの表示名を一緒に(JOINで)取得できるようにしている
   leader_id uuid not null references profiles(id) on delete cascade,
@@ -283,9 +288,11 @@ alter table profiles add column if not exists motivation text default '';
 alter table profiles add column if not exists period text default '';
 alter table profiles add column if not exists favorite_artist text default '';
 alter table profiles add column if not exists is_host boolean not null default false;
+alter table profiles add column if not exists attendance_number text default '';
 
 alter table bands alter column deadline type text using deadline::text;
 alter table bands add column if not exists reactions_public boolean not null default false;
+alter table bands add column if not exists sheet_music_url text default '';
 
 -- 募集の削除を「投稿者本人」または「ホスト」だけができるように更新
 drop policy if exists "bands_delete_own" on bands;
@@ -364,6 +371,25 @@ select cron.schedule(
   '0 3 * * *',
   $$ delete from bands where status = '締切' and updated_at < now() - interval '30 days'; $$
 );
+
+-- 新規登録時に「期」も受け取ってprofilesに保存するよう更新
+create or replace function handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, display_name, period, grade)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'display_name', '名称未設定'),
+    coalesce(new.raw_user_meta_data->>'period', ''),
+    coalesce(new.raw_user_meta_data->>'grade', '')
+  );
+  return new;
+end;
+$$;
 
 -- ============================================================
 -- 以上でテーブル・権限設定は完了です。

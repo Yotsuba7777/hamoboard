@@ -19,6 +19,7 @@ form.addEventListener("submit", async (e) => {
 
   const invite = document.getElementById("invite").value.trim();
   const display_name = document.getElementById("display_name").value.trim();
+  const period = document.getElementById("period").value.trim();
   const grade = document.getElementById("grade").value.trim();
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
@@ -36,13 +37,13 @@ form.addEventListener("submit", async (e) => {
   }
 
   // 2. 招待コードが正しければアカウント作成
-  //    display_name / grade は raw_user_meta_data に載せて送る
+  //    display_name / period / grade は raw_user_meta_data に載せて送る
   //    → DB側のトリガーが自動的にprofilesへ反映してくれる
   const { error: signUpError } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { display_name, grade },
+      data: { display_name, period, grade },
     },
   });
 
