@@ -521,6 +521,11 @@ create trigger profiles_handle_period_set
 
 -- 既存メンバーのうち、期が数字で設定済み・出席番号がまだない人に
 -- 期ごとに登録が古い順(created_at順)で出席番号を割り振る
+-- (このUPDATE自体もprofiles_handle_period_setトリガーを起動させてしまい、
+--  「期が変わっていないから出席番号を元に戻す」処理で上書きされてしまうため、
+--  バックフィル中だけトリガーを一時的に無効化する)
+alter table profiles disable trigger profiles_handle_period_set;
+
 with numbered as (
   select id, period, row_number() over (partition by period order by created_at) as rn
   from profiles
@@ -531,6 +536,8 @@ update profiles p
 set attendance_number = lpad(numbered.period, 3, '0') || lpad(numbered.rn::text, 2, '0')
 from numbered
 where p.id = numbered.id;
+
+alter table profiles enable trigger profiles_handle_period_set;
 
 -- 上の割り振りに合わせて、今後の採番が重複しないようカウンターを揃える
 insert into period_counters (period, last_number)
