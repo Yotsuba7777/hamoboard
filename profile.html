@@ -46,7 +46,7 @@
         <div class="form-group form-row">
           <div>
             <label for="p-period">期</label>
-            <input type="text" id="p-period" placeholder="例:15" />
+            <input type="number" id="p-period" min="1" step="1" inputmode="numeric" placeholder="例:17" />
           </div>
           <div>
             <label for="p-grade">学年</label>
@@ -59,7 +59,8 @@
         </div>
         <div class="form-group">
           <label for="p-attendance">出席番号</label>
-          <input type="text" id="p-attendance" placeholder="例:23" />
+          <input type="text" id="p-attendance" readonly placeholder="期を設定すると自動で決まります" />
+          <p class="hint">期を初めて設定すると自動で割り振られます。一度決まった期・出席番号は変更できません。</p>
         </div>
         <div class="form-group">
           <label for="p-bio">ひとことプロフィール</label>

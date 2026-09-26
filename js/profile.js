@@ -22,7 +22,9 @@ async function loadProfile() {
 
   document.getElementById("p-name").value = data.display_name || "";
   document.getElementById("p-grade").value = data.grade || "";
-  document.getElementById("p-period").value = data.period || "";
+  const periodInput = document.getElementById("p-period");
+  periodInput.value = data.period || "";
+  periodInput.readOnly = !!data.period;
   document.getElementById("p-artist").value = data.favorite_artist || "";
   document.getElementById("p-attendance").value = data.attendance_number || "";
   document.getElementById("p-bio").value = data.bio || "";
@@ -50,7 +52,6 @@ form.addEventListener("submit", async (e) => {
     grade: document.getElementById("p-grade").value.trim(),
     period: document.getElementById("p-period").value.trim(),
     favorite_artist: document.getElementById("p-artist").value.trim(),
-    attendance_number: document.getElementById("p-attendance").value.trim(),
     bio: document.getElementById("p-bio").value.trim(),
   };
 

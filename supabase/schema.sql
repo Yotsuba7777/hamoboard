@@ -57,6 +57,14 @@ grant execute on function check_invite_code(text) to anon, authenticated;
 -- 2. profiles : メンバー自己紹介欄
 --    auth.users(Supabaseの認証ユーザー)と1:1で対応
 -- ------------------------------------------------------------
+
+-- 期(例:"17")ごとに、現在何人に出席番号を振ったかを1行で持つカウンター
+-- (退会してもここは減らないので、番号が再利用されることはない)
+create table if not exists period_counters (
+  period text primary key,
+  last_number integer not null default 0
+);
+
 create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null,
@@ -66,7 +74,8 @@ create table if not exists profiles (
   period text default '',
   favorite_artist text default '',
   bio text default '',
-  -- 出席管理用の番号(自由入力・番号の割り振りや重複チェックは別システムで行う)
+  -- 出席番号:「期を3桁ゼロ埋め」+「期の中での通し番号を2桁ゼロ埋め」の5桁。
+  -- 期を初めて設定した時にサーバー側で自動採番され、以後は本人も変更できない
   attendance_number text default '',
   -- ホスト(サークル運営側)は自分以外の投稿も削除できる
   is_host boolean not null default false,
@@ -93,19 +102,36 @@ create trigger profiles_set_updated_at
 
 -- 新規会員登録が完了したら、自動的にprofilesへ1行作る
 -- (サインアップ時に渡した display_name / period / grade を拾う)
+-- periodが数字で渡されていれば、その期の中で次の出席番号を割り振る
 create or replace function handle_new_user()
 returns trigger
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_period text;
+  v_seq integer;
+  v_attendance_number text;
 begin
-  insert into public.profiles (id, display_name, period, grade)
+  v_period := nullif(coalesce(new.raw_user_meta_data->>'period', ''), '');
+
+  if v_period is not null and v_period ~ '^[0-9]+$' then
+    insert into period_counters (period, last_number)
+    values (v_period, 1)
+    on conflict (period) do update set last_number = period_counters.last_number + 1
+    returning last_number into v_seq;
+
+    v_attendance_number := lpad(v_period, 3, '0') || lpad(v_seq::text, 2, '0');
+  end if;
+
+  insert into public.profiles (id, display_name, period, grade, attendance_number)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'display_name', '名称未設定'),
-    coalesce(new.raw_user_meta_data->>'period', ''),
-    coalesce(new.raw_user_meta_data->>'grade', '')
+    coalesce(v_period, ''),
+    coalesce(new.raw_user_meta_data->>'grade', ''),
+    v_attendance_number
   );
   return new;
 end;
@@ -115,6 +141,45 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function handle_new_user();
+
+-- マイページで初めて「期」を数字で入力した時に、同じ仕組みで出席番号を割り振る。
+-- 一度割り振られた期・出席番号は、その後変更しようとしても元に戻す(ロックする)
+create or replace function handle_period_set()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_seq integer;
+begin
+  if (old.period is null or old.period = '') and new.period is not null and new.period <> '' then
+    if new.period ~ '^[0-9]+$' then
+      insert into period_counters (period, last_number)
+      values (new.period, 1)
+      on conflict (period) do update set last_number = period_counters.last_number + 1
+      returning last_number into v_seq;
+
+      new.attendance_number := lpad(new.period, 3, '0') || lpad(v_seq::text, 2, '0');
+    else
+      -- 数字以外が入力された場合は期を空のまま据え置く(エラーにはしない)
+      new.period := old.period;
+    end if;
+  elsif new.period is distinct from old.period then
+    new.period := old.period;
+    new.attendance_number := old.attendance_number;
+  else
+    new.attendance_number := old.attendance_number;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_handle_period_set on profiles;
+create trigger profiles_handle_period_set
+  before update on profiles
+  for each row execute function handle_period_set();
 
 -- ------------------------------------------------------------
 -- 3. bands : バンド募集掲示板
@@ -372,24 +437,103 @@ select cron.schedule(
   $$ delete from bands where status = '締切' and updated_at < now() - interval '30 days'; $$
 );
 
--- 新規登録時に「期」も受け取ってprofilesに保存するよう更新
+-- 出席番号の自動採番機能の追加分
+create table if not exists period_counters (
+  period text primary key,
+  last_number integer not null default 0
+);
+
 create or replace function handle_new_user()
 returns trigger
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_period text;
+  v_seq integer;
+  v_attendance_number text;
 begin
-  insert into public.profiles (id, display_name, period, grade)
+  v_period := nullif(coalesce(new.raw_user_meta_data->>'period', ''), '');
+
+  if v_period is not null and v_period ~ '^[0-9]+$' then
+    insert into period_counters (period, last_number)
+    values (v_period, 1)
+    on conflict (period) do update set last_number = period_counters.last_number + 1
+    returning last_number into v_seq;
+
+    v_attendance_number := lpad(v_period, 3, '0') || lpad(v_seq::text, 2, '0');
+  end if;
+
+  insert into public.profiles (id, display_name, period, grade, attendance_number)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'display_name', '名称未設定'),
-    coalesce(new.raw_user_meta_data->>'period', ''),
-    coalesce(new.raw_user_meta_data->>'grade', '')
+    coalesce(v_period, ''),
+    coalesce(new.raw_user_meta_data->>'grade', ''),
+    v_attendance_number
   );
   return new;
 end;
 $$;
+
+create or replace function handle_period_set()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_seq integer;
+begin
+  if (old.period is null or old.period = '') and new.period is not null and new.period <> '' then
+    if new.period ~ '^[0-9]+$' then
+      insert into period_counters (period, last_number)
+      values (new.period, 1)
+      on conflict (period) do update set last_number = period_counters.last_number + 1
+      returning last_number into v_seq;
+
+      new.attendance_number := lpad(new.period, 3, '0') || lpad(v_seq::text, 2, '0');
+    else
+      new.period := old.period;
+    end if;
+  elsif new.period is distinct from old.period then
+    new.period := old.period;
+    new.attendance_number := old.attendance_number;
+  else
+    new.attendance_number := old.attendance_number;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_handle_period_set on profiles;
+create trigger profiles_handle_period_set
+  before update on profiles
+  for each row execute function handle_period_set();
+
+-- 既存メンバーのうち、期が数字で設定済み・出席番号がまだない人に
+-- 期ごとに登録が古い順(created_at順)で出席番号を割り振る
+with numbered as (
+  select id, period, row_number() over (partition by period order by created_at) as rn
+  from profiles
+  where period ~ '^[0-9]+$'
+    and (attendance_number is null or attendance_number = '')
+)
+update profiles p
+set attendance_number = lpad(numbered.period, 3, '0') || lpad(numbered.rn::text, 2, '0')
+from numbered
+where p.id = numbered.id;
+
+-- 上の割り振りに合わせて、今後の採番が重複しないようカウンターを揃える
+insert into period_counters (period, last_number)
+select period, count(*)
+from profiles
+where period ~ '^[0-9]+$' and attendance_number is not null and attendance_number <> ''
+group by period
+on conflict (period) do update
+set last_number = greatest(period_counters.last_number, excluded.last_number);
 
 -- ============================================================
 -- 以上でテーブル・権限設定は完了です。
