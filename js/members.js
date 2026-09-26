@@ -36,15 +36,7 @@ async function loadMembers() {
     return;
   }
 
-  populateGradeOptions(allMembers);
   renderFilteredList();
-}
-
-function populateGradeOptions(members) {
-  const grades = Array.from(new Set(members.map((m) => m.grade).filter(Boolean))).sort();
-  gradeFilter.innerHTML =
-    `<option value="">学年:すべて</option>` +
-    grades.map((g) => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("");
 }
 
 function renderFilteredList() {
