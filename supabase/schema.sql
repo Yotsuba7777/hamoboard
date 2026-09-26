@@ -65,6 +65,10 @@ create table if not exists period_counters (
   last_number integer not null default 0
 );
 
+alter table period_counters enable row level security;
+-- ポリシーを1つも作らない = 誰も直接SELECT/INSERT/UPDATEできない
+-- (採番はsecurity definerのトリガー関数からのみ行われる)
+
 create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null,
@@ -442,6 +446,8 @@ create table if not exists period_counters (
   period text primary key,
   last_number integer not null default 0
 );
+
+alter table period_counters enable row level security;
 
 create or replace function handle_new_user()
 returns trigger
