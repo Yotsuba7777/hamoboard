@@ -185,6 +185,22 @@ create trigger profiles_handle_period_set
   before update on profiles
   for each row execute function handle_period_set();
 
+-- 退会:ログイン中の本人のアカウントを削除する(マイページの退会ボタンから呼ばれる)
+-- auth.usersを消すと、profiles・募集・リアクション・通知もまとめて削除される
+create or replace function delete_own_account()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+revoke all on function delete_own_account() from public, anon;
+grant execute on function delete_own_account() to authenticated;
+
 -- ------------------------------------------------------------
 -- 3. bands : バンド募集掲示板
 -- ------------------------------------------------------------
